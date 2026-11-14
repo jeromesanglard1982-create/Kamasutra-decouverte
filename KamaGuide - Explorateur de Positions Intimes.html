@@ -1,0 +1,1644 @@
+<!DOCTYPE html>
+<html lang="fr" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KamaGuide - Explorateur de Positions Intimes</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Cormorant Garamond (Élégance éditoriale) & Plus Jakarta Sans (Lisibilité moderne) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        serif: ['"Cormorant Garamond"', 'Georgia', 'serif'],
+                        sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+                    },
+                    colors: {
+                        velvet: {
+                            950: '#0D060C',
+                            900: '#160B14',
+                            800: '#241120',
+                            700: '#381831',
+                        },
+                        bordeaux: {
+                            500: '#9E2A4B',
+                            600: '#7E1D39',
+                            700: '#5C1227',
+                        },
+                        rosegold: {
+                            300: '#F3D1C8',
+                            400: '#E5B2A3',
+                            500: '#D49583',
+                            600: '#B87664',
+                        }
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'float': 'float 6s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-6px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Styles personnalisés pour les dégradés, barres de défilement et effets de verre */
+        body {
+            background-color: #0D060C;
+            background-image: 
+                radial-gradient(circle at 15% 15%, rgba(126, 29, 57, 0.22) 0%, transparent 45%),
+                radial-gradient(circle at 85% 80%, rgba(56, 24, 49, 0.35) 0%, transparent 50%);
+            color: #F8F1F4;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .glass-panel {
+            background: rgba(26, 12, 23, 0.72);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1px solid rgba(229, 178, 163, 0.14);
+        }
+
+        .glass-card {
+            background: linear-gradient(145deg, rgba(36, 17, 32, 0.85) 0%, rgba(19, 9, 17, 0.92) 100%);
+            border: 1px solid rgba(229, 178, 163, 0.12);
+            transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .glass-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(229, 178, 163, 0.4);
+            box-shadow: 0 16px 36px -10px rgba(158, 42, 75, 0.28);
+        }
+
+        .rosegold-gradient-text {
+            background: linear-gradient(135deg, #F3D1C8 0%, #E5B2A3 50%, #C67D6B 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .rosegold-btn {
+            background: linear-gradient(135deg, #9E2A4B 0%, #6D1831 100%);
+            border: 1px solid rgba(243, 209, 200, 0.25);
+            transition: all 0.25s ease;
+        }
+
+        .rosegold-btn:hover {
+            background: linear-gradient(135deg, #B53257 0%, #7E1D39 100%);
+            border-color: rgba(243, 209, 200, 0.5);
+            box-shadow: 0 0 20px rgba(158, 42, 75, 0.45);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0D060C;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #381831;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #7E1D39;
+        }
+
+        /* Masquer la barre de défilement horizontale sur les filtres mobiles */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* Animation d'apparition des cartes */
+        @keyframes fadeSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(14px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .card-animate {
+            animation: fadeSlideUp 0.4s ease forwards;
+        }
+    </style>
+</head>
+<body class="font-sans antialiased selection:bg-bordeaux-500 selection:text-white">
+
+    <!-- En-tête & Navigation Principale -->
+    <header class="sticky top-0 z-40 glass-panel border-b border-rosegold-400/15">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col sm:flex-row items-center justify-between py-3.5 gap-3">
+                <!-- Logo & Titre -->
+                <div class="flex items-center gap-3 cursor-pointer" onclick="resetAllFilters()">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-bordeaux-500 to-velvet-800 border border-rosegold-400/40 flex items-center justify-center shadow-lg shadow-bordeaux-600/30">
+                        <svg class="w-5 h-5 text-rosegold-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" stroke-linecap="round" stroke-linejoin="round"/>
+                            <circle cx="12" cy="10" r="2.2" fill="currentColor" opacity="0.6"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="font-serif text-2xl sm:text-3xl font-bold tracking-wide rosegold-gradient-text leading-none">
+                            KamaGuide
+                        </h1>
+                        <p class="text-[11px] uppercase tracking-[0.2em] text-rosegold-400/75 mt-0.5">
+                            Explorateur de Positions Intimes
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Navigation Onglets / Actions -->
+                <nav class="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-center sm:justify-end">
+                    <button id="nav-catalog" onclick="switchView('catalog')" class="px-3.5 py-2 rounded-full text-xs sm:text-sm font-medium transition-all bg-bordeaux-600/80 text-rosegold-300 border border-rosegold-400/30 flex items-center gap-1.5">
+                        <i data-lucide="compass" class="w-4 h-4"></i>
+                        <span>Catalogue</span>
+                    </button>
+
+                    <button id="nav-roulette" onclick="openRouletteModal()" class="px-3.5 py-2 rounded-full text-xs sm:text-sm font-medium transition-all rosegold-btn text-white flex items-center gap-1.5 shadow-md">
+                        <i data-lucide="dices" class="w-4 h-4 text-rosegold-300"></i>
+                        <span>Dé de l'Amour</span>
+                    </button>
+
+                    <button id="nav-lists" onclick="switchView('lists')" class="px-3.5 py-2 rounded-full text-xs sm:text-sm font-medium transition-all bg-velvet-800/80 hover:bg-velvet-700 text-rosegold-300/90 border border-rosegold-400/20 flex items-center gap-1.5 relative">
+                        <i data-lucide="heart" class="w-4 h-4 text-bordeaux-500 fill-bordeaux-500"></i>
+                        <span class="hidden md:inline">Mes Listes</span>
+                        <span id="total-saved-badge" class="ml-0.5 px-1.5 py-0.2 text-[11px] font-bold rounded-full bg-rosegold-400 text-velvet-950">0</span>
+                    </button>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Contenu Principal -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+
+        <!-- Section Hero / Introduction discrète -->
+        <section id="hero-banner" class="mb-7 rounded-2xl glass-panel p-5 sm:p-7 relative overflow-hidden">
+            <div class="absolute -right-12 -top-12 w-48 h-48 rounded-full bg-bordeaux-500/15 blur-2xl pointer-events-none"></div>
+            <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div class="max-w-2xl">
+                    <span class="inline-flex items-center gap-1.5 text-xs font-medium text-rosegold-400 bg-bordeaux-700/50 border border-rosegold-400/20 px-3 py-1 rounded-full mb-2.5">
+                        <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                        Art de la sensualité & complicité
+                    </span>
+                    <h2 class="font-serif text-2xl sm:text-4xl font-semibold text-white leading-tight">
+                        Explorez de nouveaux horizons à deux
+                    </h2>
+                    <p class="text-sm sm:text-base text-rosegold-300/80 mt-2 leading-relaxed">
+                        Découvrez 18 postures illustrées avec finesse, filtrées selon vos envies du moment — de la tendresse fusionnelle aux élans les plus intenses.
+                    </p>
+                </div>
+                <div class="flex flex-wrap sm:flex-nowrap gap-3 shrink-0">
+                    <div class="bg-velvet-900/90 border border-rosegold-400/15 rounded-xl px-4 py-3 text-center min-w-[95px]">
+                        <div class="font-serif text-2xl font-bold text-rosegold-400" id="stat-total">18</div>
+                        <div class="text-[11px] text-rosegold-300/70 uppercase tracking-wider">Postures</div>
+                    </div>
+                    <div class="bg-velvet-900/90 border border-rosegold-400/15 rounded-xl px-4 py-3 text-center min-w-[95px] cursor-pointer hover:border-rosegold-400/40 transition" onclick="switchView('lists', 'favorites')">
+                        <div class="font-serif text-2xl font-bold text-bordeaux-500" id="stat-favorites">0</div>
+                        <div class="text-[11px] text-rosegold-300/70 uppercase tracking-wider">Favoris</div>
+                    </div>
+                    <div class="bg-velvet-900/90 border border-rosegold-400/15 rounded-xl px-4 py-3 text-center min-w-[95px] cursor-pointer hover:border-rosegold-400/40 transition" onclick="switchView('lists', 'wishlist')">
+                        <div class="font-serif text-2xl font-bold text-amber-300/90" id="stat-wishlist">0</div>
+                        <div class="text-[11px] text-rosegold-300/70 uppercase tracking-wider">À tester</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Barre de Recherche & Filtres (Vue Catalogue) -->
+        <section id="filters-section" class="mb-7 space-y-4">
+            <div class="flex flex-col lg:flex-row gap-3.5 items-stretch lg:items-center justify-between">
+                <!-- Champ de recherche -->
+                <div class="relative flex-1 max-w-xl">
+                    <i data-lucide="search" class="w-4 h-4 text-rosegold-400/70 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                    <input 
+                        type="text" 
+                        id="search-input" 
+                        placeholder="Rechercher une position, une sensation, un mot-clé (ex: point G, fusion, confort...)" 
+                        class="w-full pl-11 pr-10 py-3 rounded-xl bg-velvet-900/90 border border-rosegold-400/20 text-sm text-white placeholder-rosegold-300/40 focus:outline-none focus:border-rosegold-400/60 focus:ring-1 focus:ring-rosegold-400/40 transition"
+                    >
+                    <button id="clear-search" onclick="clearSearch()" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-rosegold-400/70 hover:text-white p-1">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                </div>
+
+                <!-- Filtre Difficulté -->
+                <div class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 lg:pb-0">
+                    <span class="text-xs text-rosegold-300/60 uppercase tracking-wider font-medium mr-1 shrink-0">Niveau :</span>
+                    <button onclick="setDifficultyFilter('Toutes')" data-diff="Toutes" class="diff-btn active px-3.5 py-2 rounded-xl text-xs font-medium bg-rosegold-400 text-velvet-950 transition shrink-0">
+                        Tous
+                    </button>
+                    <button onclick="setDifficultyFilter('Facile')" data-diff="Facile" class="diff-btn px-3.5 py-2 rounded-xl text-xs font-medium bg-velvet-800/80 text-rosegold-300/80 border border-rosegold-400/15 hover:border-rosegold-400/40 transition shrink-0">
+                        Facile
+                    </button>
+                    <button onclick="setDifficultyFilter('Intermédiaire')" data-diff="Intermédiaire" class="diff-btn px-3.5 py-2 rounded-xl text-xs font-medium bg-velvet-800/80 text-rosegold-300/80 border border-rosegold-400/15 hover:border-rosegold-400/40 transition shrink-0">
+                        Intermédiaire
+                    </button>
+                    <button onclick="setDifficultyFilter('Avancé')" data-diff="Avancé" class="diff-btn px-3.5 py-2 rounded-xl text-xs font-medium bg-velvet-800/80 text-rosegold-300/80 border border-rosegold-400/15 hover:border-rosegold-400/40 transition shrink-0">
+                        Avancé
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filtres Catégories (Ambiances) -->
+            <div class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+                <span class="text-xs text-rosegold-300/60 uppercase tracking-wider font-medium mr-1 shrink-0">Ambiance :</span>
+                <button onclick="setCategoryFilter('Toutes')" data-cat="Toutes" class="cat-btn active px-4 py-2 rounded-full text-xs font-medium bg-bordeaux-600 text-white border border-rosegold-400/40 transition shrink-0">
+                    Toutes les ambiances
+                </button>
+                <button onclick="setCategoryFilter('Romantique')" data-cat="Romantique" class="cat-btn px-4 py-2 rounded-full text-xs font-medium bg-velvet-900/80 text-rosegold-300/80 border border-rosegold-400/15 hover:border-rosegold-400/40 transition shrink-0 flex items-center gap-1.5">
+                    <span>🌹</span> Romantique
+                </button>
+                <button onclick="setCategoryFilter('Intense')" data-cat="Intense" class="cat-btn px-4 py-2 rounded-full text-xs font-medium bg-velvet-900/80 text-rosegold-300/80 border border-rosegold-400/15 hover:border-rosegold-400/40 transition shrink-0 flex items-center gap-1.5">
+                    <span>🔥</span> Intense
+                </button>
+                <button onclick="setCategoryFilter('Acrobatique')" data-cat="Acrobatique" class="cat-btn px-4 py-2 rounded-full text-xs font-medium bg-velvet-900/80 text-rosegold-300/80 border border-rosegold-400/15 hover:border-rosegold-400/40 transition shrink-0 flex items-center gap-1.5">
+                    <span>✨</span> Acrobatique
+                </button>
+                <button onclick="setCategoryFilter('Détente')" data-cat="Détente" class="cat-btn px-4 py-2 rounded-full text-xs font-medium bg-velvet-900/80 text-rosegold-300/80 border border-rosegold-400/15 hover:border-rosegold-400/40 transition shrink-0 flex items-center gap-1.5">
+                    <span>🌙</span> Détente
+                </button>
+                <button onclick="setCategoryFilter('Orale')" data-cat="Orale" class="cat-btn px-4 py-2 rounded-full text-xs font-medium bg-velvet-900/80 text-rosegold-300/80 border border-rosegold-400/15 hover:border-rosegold-400/40 transition shrink-0 flex items-center gap-1.5">
+                    <span>💋</span> Orale
+                </button>
+            </div>
+        </section>
+
+        <!-- Sous-navigation pour la Vue "Mes Listes" (Favoris / À tester) -->
+        <section id="lists-header" class="hidden mb-7">
+            <div class="glass-panel rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                    <h2 class="font-serif text-2xl sm:text-3xl font-semibold text-white">Votre Carnet Intime</h2>
+                    <p class="text-sm text-rosegold-300/75 mt-1">Retrouvez vos postures coups de cœur et vos prochaines envies à partager en couple.</p>
+                </div>
+                <div class="flex items-center gap-2 bg-velvet-950/90 p-1.5 rounded-xl border border-rosegold-400/15 w-full sm:w-auto">
+                    <button id="tab-favorites" onclick="setListSubTab('favorites')" class="flex-1 sm:flex-initial px-4 py-2 rounded-lg text-xs sm:text-sm font-medium bg-bordeaux-600 text-white transition flex items-center justify-center gap-2">
+                        <i data-lucide="heart" class="w-4 h-4 fill-current"></i>
+                        <span>Favoris (<span id="tab-fav-count">0</span>)</span>
+                    </button>
+                    <button id="tab-wishlist" onclick="setListSubTab('wishlist')" class="flex-1 sm:flex-initial px-4 py-2 rounded-lg text-xs sm:text-sm font-medium text-rosegold-300/80 hover:text-white transition flex items-center justify-center gap-2">
+                        <i data-lucide="bookmark" class="w-4 h-4"></i>
+                        <span>À essayer (<span id="tab-wish-count">0</span>)</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Compteur de résultats -->
+        <div class="flex items-center justify-between mb-4">
+            <p id="results-count" class="text-xs sm:text-sm text-rosegold-300/70">
+                Affichage de <span class="text-white font-semibold">18</span> positions
+            </p>
+            <button id="reset-filters-link" onclick="resetAllFilters()" class="hidden text-xs text-rosegold-400 hover:text-rosegold-300 underline underline-offset-4">
+                Réinitialiser les filtres
+            </button>
+        </div>
+
+        <!-- Grille du Catalogue de Positions -->
+        <section id="positions-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            <!-- Les cartes sont générées dynamiquement en JS -->
+        </section>
+
+        <!-- État vide (aucun résultat ou liste vide) -->
+        <div id="empty-state" class="hidden glass-panel rounded-2xl p-12 text-center my-8">
+            <div class="w-16 h-16 rounded-full bg-velvet-800 border border-rosegold-400/20 flex items-center justify-center mx-auto mb-4">
+                <i data-lucide="sparkles" class="w-7 h-7 text-rosegold-400"></i>
+            </div>
+            <h3 id="empty-title" class="font-serif text-2xl font-semibold text-white mb-2">Aucune position trouvée</h3>
+            <p id="empty-desc" class="text-sm text-rosegold-300/75 max-w-md mx-auto mb-6">
+                Essayez de modifier vos critères de recherche ou d'explorer toutes les ambiances disponibles.
+            </p>
+            <button onclick="resetAllFilters()" class="rosegold-btn px-5 py-2.5 rounded-full text-sm font-medium text-white">
+                Explorer tout le catalogue
+            </button>
+        </div>
+    </main>
+
+    <!-- Pied de page élégant -->
+    <footer class="border-t border-rosegold-400/10 mt-16 py-8 text-center text-xs text-rosegold-300/50">
+        <div class="max-w-7xl mx-auto px-4">
+            <p class="font-serif text-base text-rosegold-400/80 mb-1">KamaGuide — L'art de la découverte intime</p>
+            <p>Conçu avec bienveillance, respect et élégance. Communication, consentement et écoute mutuelle sont les clés du plaisir partagé.</p>
+        </div>
+    </footer>
+
+    <!-- =====================================================================
+         MODALE 1 : FICHE DÉTAILLÉE D'UNE POSITION
+    ====================================================================== -->
+    <div id="detail-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-md transition-opacity">
+        <div class="glass-panel border border-rosegold-400/30 rounded-3xl max-w-4xl w-full max-h-[92vh] overflow-y-auto shadow-2xl shadow-black relative animate-[fadeSlideUp_0.3s_ease]">
+            <!-- Bouton Fermer -->
+            <button onclick="closeDetailModal()" aria-label="Fermer" class="absolute top-4 right-4 z-20 w-10 h-10 rounded-full bg-velvet-900/90 hover:bg-bordeaux-600 text-rosegold-300 hover:text-white border border-rosegold-400/25 flex items-center justify-center transition">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+
+            <div id="detail-modal-content" class="p-5 sm:p-8">
+                <!-- Contenu injecté dynamiquement -->
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         MODALE 2 : DÉ DE L'AMOUR / ROULETTE ALÉATOIRE
+    ====================================================================== -->
+    <div id="roulette-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-3 sm:p-5 bg-black/85 backdrop-blur-md">
+        <div class="glass-panel border border-rosegold-400/35 rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl relative text-center animate-[fadeSlideUp_0.3s_ease]">
+            <button onclick="closeRouletteModal()" aria-label="Fermer" class="absolute top-4 right-4 w-9 h-9 rounded-full bg-velvet-900/90 hover:bg-bordeaux-600 text-rosegold-300 border border-rosegold-400/20 flex items-center justify-center transition">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-bordeaux-700/60 border border-rosegold-400/25 text-xs text-rosegold-300 mb-3">
+                <i data-lucide="dices" class="w-3.5 h-3.5 text-rosegold-400"></i>
+                <span>Laissez le hasard guider votre soirée</span>
+            </div>
+
+            <h2 class="font-serif text-3xl font-bold rosegold-gradient-text mb-2">Le Dé de l'Amour</h2>
+            <p class="text-xs sm:text-sm text-rosegold-300/75 mb-5">
+                Personnalisez vos critères puis lancez le tirage pour découvrir votre prochaine expérience à deux.
+            </p>
+
+            <!-- Filtres du tirage -->
+            <div class="grid grid-cols-2 gap-3 mb-6 text-left">
+                <div>
+                    <label class="block text-[11px] uppercase tracking-wider text-rosegold-400/80 mb-1.5">Ambiance souhaitée</label>
+                    <select id="roulette-cat" class="w-full bg-velvet-950 border border-rosegold-400/25 rounded-xl px-3 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-rosegold-400">
+                        <option value="Toutes">Toutes les ambiances</option>
+                        <option value="Romantique">🌹 Romantique</option>
+                        <option value="Intense">🔥 Intense</option>
+                        <option value="Acrobatique">✨ Acrobatique</option>
+                        <option value="Détente">🌙 Détente</option>
+                        <option value="Orale">💋 Orale</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[11px] uppercase tracking-wider text-rosegold-400/80 mb-1.5">Niveau maximum</label>
+                    <select id="roulette-diff" class="w-full bg-velvet-950 border border-rosegold-400/25 rounded-xl px-3 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-rosegold-400">
+                        <option value="Toutes">Tous niveaux</option>
+                        <option value="Facile">Facile uniquement</option>
+                        <option value="Intermédiaire">Facile & Intermédiaire</option>
+                        <option value="Avancé">Avancé uniquement</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Zone d'affichage du tirage -->
+            <div id="roulette-stage" class="rounded-2xl bg-velvet-950/90 border border-rosegold-400/20 p-6 mb-6 min-h-[230px] flex flex-col items-center justify-center relative overflow-hidden">
+                <div id="roulette-placeholder" class="flex flex-col items-center">
+                    <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-bordeaux-600/40 to-velvet-800 border border-rosegold-400/30 flex items-center justify-center mb-3 animate-float">
+                        <i data-lucide="sparkles" class="w-9 h-9 text-rosegold-300"></i>
+                    </div>
+                    <p class="font-serif text-xl text-rosegold-300">Prêts à tenter l'expérience ?</p>
+                    <p class="text-xs text-rosegold-300/60 mt-1">Appuyez sur le bouton ci-dessous pour lancer le tirage</p>
+                </div>
+
+                <div id="roulette-result" class="hidden w-full flex flex-col items-center">
+                    <!-- Résultat injecté dynamiquement -->
+                </div>
+            </div>
+
+            <!-- Boutons d'action -->
+            <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                <button id="spin-btn" onclick="spinRoulette()" class="rosegold-btn px-7 py-3.5 rounded-full text-sm font-semibold text-white flex items-center justify-center gap-2 shadow-lg">
+                    <i data-lucide="shuffle" class="w-4 h-4"></i>
+                    <span>Lancer le tirage</span>
+                </button>
+                <button id="roulette-detail-btn" class="hidden px-6 py-3.5 rounded-full text-sm font-medium bg-velvet-800 hover:bg-velvet-700 text-rosegold-300 border border-rosegold-400/30 transition">
+                    Voir la fiche complète
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast discrète -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+        <div class="glass-panel border border-rosegold-400/40 px-4 py-3 rounded-2xl shadow-xl flex items-center gap-2.5 text-sm text-white">
+            <i id="toast-icon" data-lucide="check-circle-2" class="w-4 h-4 text-rosegold-400"></i>
+            <span id="toast-message">Action effectuée</span>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         JAVASCRIPT : DONNÉES, ILLUSTRATIONS SVG & LOGIQUE INTERACTIVE
+    ====================================================================== -->
+    <script>
+        /**
+         * Générateur d'illustrations SVG minimalistes, artistiques et respectueuses.
+         * Utilise des courbes abstraites fluides (trait or rose #E5B2A3 et bordeaux #9E2A4B)
+         * évoquant l'enlacement et la géométrie des corps avec élégance.
+         */
+        function getPositionSVG(type, large = false) {
+            const sizeClass = large ? "w-56 h-44 sm:w-64 sm:h-48" : "w-full h-36";
+            const defs = `
+                <defs>
+                    <linearGradient id="rg-${type}" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#F3D1C8"/>
+                        <stop offset="55%" stop-color="#E5B2A3"/>
+                        <stop offset="100%" stop-color="#9E2A4B"/>
+                    </linearGradient>
+                    <linearGradient id="bd-${type}" x1="100%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="#C84B6E"/>
+                        <stop offset="100%" stop-color="#6D1831"/>
+                    </linearGradient>
+                    <radialGradient id="glow-${type}" cx="50%" cy="50%" r="50%">
+                        <stop offset="0%" stop-color="#9E2A4B" stop-opacity="0.28"/>
+                        <stop offset="100%" stop-color="#0D060C" stop-opacity="0"/>
+                    </radialGradient>
+                </defs>
+                <ellipse cx="100" cy="75" rx="75" ry="48" fill="url(#glow-${type})"/>
+            `;
+
+            const shapes = {
+                missionnaire: `
+                    <!-- Ligne d'appui -->
+                    <line x1="25" y1="115" x2="175" y2="115" stroke="#E5B2A3" stroke-opacity="0.2" stroke-width="1.5" stroke-linecap="round"/>
+                    <!-- Partenaire allongé(e) -->
+                    <circle cx="52" cy="96" r="9" fill="none" stroke="url(#rg-missionnaire)" stroke-width="2.5"/>
+                    <path d="M62 103 Q105 110 158 103" fill="none" stroke="url(#rg-missionnaire)" stroke-width="3" stroke-linecap="round"/>
+                    <path d="M122 105 Q138 85 154 102" fill="none" stroke="url(#rg-missionnaire)" stroke-width="2.5" stroke-linecap="round"/>
+                    <!-- Partenaire au-dessus -->
+                    <circle cx="66" cy="70" r="9" fill="none" stroke="url(#bd-missionnaire)" stroke-width="2.5"/>
+                    <path d="M62 80 L55 103" fill="none" stroke="url(#bd-missionnaire)" stroke-width="2.5" stroke-linecap="round"/>
+                    <path d="M74 78 Q115 86 164 105" fill="none" stroke="url(#bd-missionnaire)" stroke-width="3" stroke-linecap="round"/>
+                `,
+                levrette: `
+                    <line x1="25" y1="118" x2="175" y2="118" stroke="#E5B2A3" stroke-opacity="0.2" stroke-width="1.5" stroke-linecap="round"/>
+                    <!-- Partenaire à quatre pattes -->
+                    <circle cx="145" cy="72" r="9" fill="none" stroke="url(#rg-levrette)" stroke-width="2.5"/>
+                    <path d="M137 82 L134 116" fill="none" stroke="url(#rg-levrette)" stroke-width="2.5" stroke-linecap="round"/>
+                    <path d="M136 80 Q105 74 82 84 L82 116" fill="none" stroke="url(#rg-levrette)" stroke-width="3" stroke-linecap="round"/>
+                    <!-- Partenaire derrière -->
+                    <circle cx="66" cy="48" r="9" fill="none" stroke="url(#bd-levrette)" stroke-width="2.5"/>
+                    <path d="M66 59 L64 88 L64 116" fill="none" stroke="url(#bd-levrette)" stroke-width="3" stroke-linecap="round"/>
+                    <path d="M67 68 Q85 73 98 79" fill="none" stroke="url(#bd-levrette)" stroke-width="2.2" stroke-linecap="round"/>
+                `,
+                andromaque: `
+                    <line x1="25" y1="118" x2="175" y2="118" stroke="#E5B2A3" stroke-opacity="0.2" stroke-width="1.5" stroke-linecap="round"/>
+                    <!-- Partenaire allongé(e) -->
+                    <circle cx="46" cy="102" r="9" fill="none" stroke="url(#bd-andromaque)" stroke-width="2.5"/>
+                    <path d="M57 109 Q110 113 166 109" fill="none" stroke="url(#bd-andromaque)" stroke-width="3" stroke-linecap="round"/>
+                    <!-- Partenaire assis(e) au-dessus -->
+                    <circle cx="105" cy="42" r="9" fill="none" stroke="url(#rg-andromaque)" stroke-width="2.5"/>
+                    <path d="M105 53 Q103 78 106 105" fill="none" stroke="url(#rg-andromaque)" stroke-width="3" stroke-linecap="round"/>
+                    <path d="M106 96 Q124 94 126 112" fill="none" stroke="url(#rg-andromaque)" stroke-width="2.5" stroke-linecap="round"/>
+                    <path d="M104 66 Q88 82 82 104" fill="none" stroke="url(#rg-andromaque)" stroke-width="2.2" stroke-linecap="round"/>
+                `,
+                cuillere: `
+                    <line x1="25" y1="116" x2="175" y2="116" stroke="#E5B2A3" stroke-opacity="0.2" stroke-width="1.5" stroke-linecap="round"/>
+                    <!-- Courbes emboîtées -->
+                    <circle cx="54" cy="76" r="8.5" fill="none" stroke="url(#bd-cuillere)" stroke-width="2.5"/>
+                    <path d="M62 84 Q96 76 116 92 Q132 104 156 96" fill="none" stroke="url(#bd-cuillere)" stroke-width="3" stroke-linecap="round"/>
+                    <circle cx="72" cy="84" r="8.5" fill="none" stroke="url(#rg-cuillere)" stroke-width="2.5"/>
+                    <path d="M80 92 Q108 86 126 100 Q140 110 164 102" fill="none" stroke="url(#rg-cuillere)" stroke-width="3" stroke-linecap="round"/>
+                `,
+                lotus: `
+                    <line x1="35" y1="120" x2="165" y2="120" stroke="#E5B2A3" stroke-opacity="0.2" stroke-width="1.5" stroke-linecap="round"/>
+                    <!-- Partenaire gauche assis -->
+                    <circle cx="80" cy="45" r="9" fill="none" stroke="url(#bd-lotus)" stroke-width="2.5"/>
+                    <path d="M78 56 Q72 85 82 112 L116 112" fill="none" stroke="url(#bd-lotus)" stroke-width="3" stroke-linecap="round"/>
+                    <!-- Partenaire droite enlacé -->
+                    <circle cx="118" cy="47" r="9" fill="none" stroke="url(#rg-lotus)" stroke-width="2.5"/>
+                    <path d="M120 58 Q126 85 114 108 L80 108" fill="none" stroke="url(#rg-lotus)" stroke-width="3" stroke-linecap="round"/>
+                    <!-- Bras entrelacés -->
+                    <path d="M82 68 Q100 76 118 68" fill="none" stroke="#F3D1C8" stroke-width="2" stroke-linecap="round"/>
+                `,
+                pont: `
+                    <line x1="25" y1="118" x2="175" y2="118" stroke="#E5B2A3" stroke-opacity="0.2" stroke-width="1.5" stroke-linecap="round"/>
+                    <!-- Arche -->
+                    <circle cx="48" cy="103" r="8.5" fill="none" stroke="url(#rg-pont)" stroke-width="2.5"/>
+                    <path d="M58 106 Q92 66 126 94 L132 116" fill="none" stroke="url(#rg-pont)" stroke-width="3" stroke-linecap="round"/>
+                    <!-- Partenaire face -->
+                    <circle cx="144" cy="54" r="9" fill="none" stroke="url(#bd-pont)" stroke-width="2.5"/>
+                    <path d="M144 65 L144 96 L144 116" fill="none" stroke="url(#bd-pont)" stroke-width="3" stroke-linecap="round"/>
+                    <path d="M142 74 L118 84" fill="none" stroke="url(#bd-pont)" stroke-width="2.2" stroke-linecap="round"/>
+                `,
+                soixanteneuf: `
+                    <line x1="25" y1="116" x2="175" y2="116" stroke="#E5B2A3" stroke-opacity="0.2" stroke-width="1.5" stroke-linecap="round"/>
+                    <!-- Symétrie inversée -->
+                    <circle cx="52" cy="100" r="8.5" fill="none" stroke="url(#bd-soixanteneuf)" stroke-width="2.5"/>
+                    <path d="M62 104 Q105 108 148 96" fill="none" stroke="url(#bd-soixanteneuf)" stroke-width="3" stroke-linecap="round"/>
+                    <circle cx="148" cy="74" r="8.5" fill="none" stroke="url(#rg-soixanteneuf)" stroke-width="2.5"/>
+                    <path d="M138 78 Q95 74 52 86" fill="none" stroke="url(#rg-soixanteneuf)" stroke-width="3" stroke-linecap="round"/>
+                `,
+                brouette: `
+                    <line x1="25" y1="118" x2="175" y2="118" stroke="#E5B2A3" stroke-opacity="0.2" stroke-width="1.5" stroke-linecap="round"/>
+                    <!-- Mains au sol et corps incliné -->
+                    <circle cx="148" cy="88" r="8.5" fill="none" stroke="url(#rg-brouette)" stroke-width="2.5"/>
+                    <path d="M142 96 L138 116" fill="none" stroke="url(#rg-brouette)" stroke-width="2.5" stroke-linecap="round"/>
+                    <path d="M140 90 L82 72" fill="none" stroke="url(#rg-brouette)" stroke-width="3" stroke-linecap="round"/>
+                    <!-- Partenaire debout soutenant -->
+                    <circle cx="68" cy="40" r="9" fill="none" stroke="url(#bd-brouette)" stroke-width="2.5"/>
+                    <path d="M68 51 L68 116" fill="none" stroke="url(#bd-brouette)" stroke-width="3" stroke-linecap="round"/>
+                    <path d="M69 64 L85 73" fill="none" stroke="url(#bd-brouette)" stroke-width="2.4" stroke-linecap="round"/>
+                `,
+                etoile: `
+                    <line x1="25" y1="116" x2="175" y2="116" stroke="#E5B2A3" stroke-opacity="0.2" stroke-width="1.5" stroke-linecap="round"/>
+                    <!-- Ouverture détendue -->
+                    <circle cx="52" cy="98" r="9" fill="none" stroke="url(#rg-etoile)" stroke-width="2.5"/>
+                    <path d="M62 104 L125 106 L156 86" fill="none" stroke="url(#rg-etoile)" stroke-width="3" stroke-linecap="round"/>
+                    <path d="M125 106 L158 112" fill="none" stroke="url(#rg-etoile)" stroke-width="2.5" stroke-linecap="round"/>
+                    <circle cx="110" cy="64" r="8.5" fill="none" stroke="url(#bd-etoile)" stroke-width="2.5"/>
+                    <path d="M110 74 Q112 90 120 102" fill="none" stroke="url(#bd-etoile)" stroke-width="2.8" stroke-linecap="round"/>
+                `,
+                coquillage: `
+                    <line x1="25" y1="118" x2="175" y2="118" stroke="#E5B2A3" stroke-opacity="0.2" stroke-width="1.5" stroke-linecap="round"/>
+                    <!-- Jambes repliées vers le haut -->
+                    <circle cx="52" cy="102" r="8.5" fill="none" stroke="url(#rg-coquillage)" stroke-width="2.5"/>
+                    <path d="M62 106 L108 106 Q116 74 78 64" fill="none" stroke="url(#rg-coquillage)" stroke-width="3" stroke-linecap="round"/>
+                    <!-- Partenaire penché -->
+                    <circle cx="136" cy="58" r="9" fill="none" stroke="url(#bd-coquillage)" stroke-width="2.5"/>
+                    <path d="M134 69 Q122 92 112 106" fill="none" stroke="url(#bd-coquillage)" stroke-width="3" stroke-linecap="round"/>
+                    <path d="M134 86 L138 116" fill="none" stroke="url(#bd-coquillage)" stroke-width="2.5" stroke-linecap="round"/>
+                `,
+                cheval: `
+                    <line x1="30" y1="118" x2="170" y2="118" stroke="#E5B2A3" stroke-opacity="0.2" stroke-width="1.5" stroke-linecap="round"/>
+                    <!-- Deux bustes inclinés en V -->
+                    <circle cx="72" cy="48" r="9" fill="none" stroke="url(#bd-cheval)" stroke-width="2.5"/>
+                    <path d="M76 58 Q88 86 96 108 L124 114" fill="none" stroke="url(#bd-cheval)" stroke-width="3" stroke-linecap="round"/>
+                    <circle cx="126" cy="50" r="9" fill="none" stroke="url(#rg-cheval)" stroke-width="2.5"/>
+                    <path d="M122 60 Q110 86 102 106 L74 114" fill="none" stroke="url(#rg-cheval)" stroke-width="3" stroke-linecap="round"/>
+                `,
+                chaise: `
+                    <!-- Assise stylisée -->
+                    <path d="M65 55 L65 92 L105 92 L105 120" fill="none" stroke="#E5B2A3" stroke-opacity="0.28" stroke-width="2" stroke-linecap="round"/>
+                    <circle cx="78" cy="44" r="8.5" fill="none" stroke="url(#bd-chaise)" stroke-width="2.5"/>
+                    <path d="M78 54 L78 88 L112 88 L115 118" fill="none" stroke="url(#bd-chaise)" stroke-width="3" stroke-linecap="round"/>
+                    <circle cx="114" cy="42" r="8.5" fill="none" stroke="url(#rg-chaise)" stroke-width="2.5"/>
+                    <path d="M114 52 Q112 72 104 86 L82 96" fill="none" stroke="url(#rg-chaise)" stroke-width="3" stroke-linecap="round"/>
+                `,
+                trapeze: `
+                    <!-- Bord surélevé -->
+                    <path d="M25 88 L95 88 L95 120" fill="none" stroke="#E5B2A3" stroke-opacity="0.28" stroke-width="2" stroke-linecap="round"/>
+                    <circle cx="44" cy="74" r="8.5" fill="none" stroke="url(#rg-trapeze)" stroke-width="2.5"/>
+                    <path d="M54 80 L95 82 L114 66" fill="none" stroke="url(#rg-trapeze)" stroke-width="3" stroke-linecap="round"/>
+                    <circle cx="122" cy="42" r="9" fill="none" stroke="url(#bd-trapeze)" stroke-width="2.5"/>
+                    <path d="M120 53 L114 84 L114 118" fill="none" stroke="url(#bd-trapeze)" stroke-width="3" stroke-linecap="round"/>
+                `,
+                papillon: `
+                    <path d="M25 90 L98 90 L98 120" fill="none" stroke="#E5B2A3" stroke-opacity="0.28" stroke-width="2" stroke-linecap="round"/>
+                    <circle cx="44" cy="76" r="8.5" fill="none" stroke="url(#rg-papillon)" stroke-width="2.5"/>
+                    <path d="M54 82 L96 84" fill="none" stroke="url(#rg-papillon)" stroke-width="3" stroke-linecap="round"/>
+                    <!-- Ailes de papillon stylisées -->
+                    <path d="M96 84 Q112 58 126 70" fill="none" stroke="url(#rg-papillon)" stroke-width="2.5" stroke-linecap="round"/>
+                    <circle cx="122" cy="42" r="9" fill="none" stroke="url(#bd-papillon)" stroke-width="2.5"/>
+                    <path d="M120 53 L114 84 L114 118" fill="none" stroke="url(#bd-papillon)" stroke-width="3" stroke-linecap="round"/>
+                `,
+                amazonie: `
+                    <line x1="25" y1="118" x2="175" y2="118" stroke="#E5B2A3" stroke-opacity="0.2" stroke-width="1.5" stroke-linecap="round"/>
+                    <!-- Partenaire sur le dos jambes relevées -->
+                    <circle cx="52" cy="102" r="8.5" fill="none" stroke="url(#bd-amazonie)" stroke-width="2.5"/>
+                    <path d="M62 108 L108 108 L112 76" fill="none" stroke="url(#bd-amazonie)" stroke-width="3" stroke-linecap="round"/>
+                    <!-- Partenaire accroupie au-dessus -->
+                    <circle cx="106" cy="40" r="9" fill="none" stroke="url(#rg-amazonie)" stroke-width="2.5"/>
+                    <path d="M106 51 L106 82 L126 94 L126 116" fill="none" stroke="url(#rg-amazonie)" stroke-width="3" stroke-linecap="round"/>
+                `,
+                enclume: `
+                    <line x1="25" y1="118" x2="175" y2="118" stroke="#E5B2A3" stroke-opacity="0.2" stroke-width="1.5" stroke-linecap="round"/>
+                    <circle cx="48" cy="102" r="8.5" fill="none" stroke="url(#rg-enclume)" stroke-width="2.5"/>
+                    <path d="M58 108 L106 108 L128 66" fill="none" stroke="url(#rg-enclume)" stroke-width="3" stroke-linecap="round"/>
+                    <circle cx="118" cy="52" r="9" fill="none" stroke="url(#bd-enclume)" stroke-width="2.5"/>
+                    <path d="M116 63 Q112 86 108 106 L142 112" fill="none" stroke="url(#bd-enclume)" stroke-width="3" stroke-linecap="round"/>
+                `,
+                cascade: `
+                    <line x1="25" y1="118" x2="175" y2="118" stroke="#E5B2A3" stroke-opacity="0.2" stroke-width="1.5" stroke-linecap="round"/>
+                    <circle cx="145" cy="96" r="8.5" fill="none" stroke="url(#rg-cascade)" stroke-width="2.5"/>
+                    <path d="M135 102 Q105 108 82 94 L82 116" fill="none" stroke="url(#rg-cascade)" stroke-width="3" stroke-linecap="round"/>
+                    <circle cx="64" cy="54" r="9" fill="none" stroke="url(#bd-cascade)" stroke-width="2.5"/>
+                    <path d="M66 65 L74 96 L74 116" fill="none" stroke="url(#bd-cascade)" stroke-width="3" stroke-linecap="round"/>
+                `,
+                trone: `
+                    <path d="M62 50 L62 92 L106 92 L106 120" fill="none" stroke="#E5B2A3" stroke-opacity="0.28" stroke-width="2" stroke-linecap="round"/>
+                    <circle cx="76" cy="40" r="8.5" fill="none" stroke="url(#bd-trone)" stroke-width="2.5"/>
+                    <path d="M76 50 L76 88 L112 88 L112 118" fill="none" stroke="url(#bd-trone)" stroke-width="3" stroke-linecap="round"/>
+                    <circle cx="112" cy="58" r="8.5" fill="none" stroke="url(#rg-trone)" stroke-width="2.5"/>
+                    <path d="M104 64 L84 82" fill="none" stroke="url(#rg-trone)" stroke-width="2.5" stroke-linecap="round"/>
+                    <path d="M116 68 L128 118" fill="none" stroke="url(#rg-trone)" stroke-width="3" stroke-linecap="round"/>
+                `
+            };
+
+            return `
+                <svg viewBox="0 0 200 140" class="${sizeClass} mx-auto overflow-visible" aria-hidden="true">
+                    ${defs}
+                    ${shapes[type] || shapes.missionnaire}
+                </svg>
+            `;
+        }
+
+        /**
+         * Base de données complète de 18 positions intimes en français
+         */
+        const POSITIONS_DATA = [
+            {
+                id: 1,
+                name: "Le Missionnaire",
+                subtitle: "L'intimité classique et fusionnelle",
+                category: "Romantique",
+                difficulty: "Facile",
+                intimacy: 5,
+                intensity: 3,
+                svgKey: "missionnaire",
+                keywords: ["classique", "regard", "baisers", "tendresse", "débutant", "fusion"],
+                description: "Grand classique de l'intimité amoureuse, le Missionnaire privilégie le contact peau à peau, les échanges de regards profonds et la synchronisation des respirations.",
+                steps: [
+                    "Le partenaire receveur s'allonge confortablement sur le dos, jambes légèrement écartées et fléchies.",
+                    "Le second partenaire s'installe au-dessus, en appui sur les avant-bras ou les mains pour répartir harmonieusement son poids.",
+                    "Ajustez l'inclinaison du bassin pour trouver l'angle le plus agréable et laissez vos visages se rapprocher."
+                ],
+                benefits: [
+                    "Connexion émotionnelle maximale grâce au contact visuel permanent",
+                    "Liberté totale pour les baisers, caresses dans le cou et murmures",
+                    "Contrôle doux et progressif du rythme"
+                ],
+                tips: "Glissez un oreiller ferme sous les hanches du partenaire allongé : cette légère inclinaison transforme l'angle de stimulation et décuple les sensations sans effort."
+            },
+            {
+                id: 2,
+                name: "La Levrette",
+                subtitle: "La passion instinctive et profonde",
+                category: "Intense",
+                difficulty: "Facile",
+                intimacy: 3,
+                intensity: 5,
+                svgKey: "levrette",
+                keywords: ["profondeur", "passion", "intense", "point g", "cambrure"],
+                description: "Position emblématique de la passion charnelle, la Levrette offre une stimulation profonde et une liberté de mouvement remarquable pour les deux partenaires.",
+                steps: [
+                    "Le partenaire receveur se place à quatre pattes sur le lit, en appui sur les mains ou les avant-bras, le dos légèrement cambré.",
+                    "Le second partenaire s'agenouille derrière et pose ses mains sur les hanches ou la taille pour guider le mouvement.",
+                    "Trouvez ensemble la cadence idéale, en alternant lenteur sensuelle et élans plus soutenus."
+                ],
+                benefits: [
+                    "Stimulation directe et profonde des zones les plus sensibles",
+                    "Mains libres pour caresser le dos, les hanches ou stimuler l'avant du corps",
+                    "Sensation de lâcher-prise intense"
+                ],
+                tips: "Pour plus de confort au niveau des poignets et une cambrure encore plus sensuelle, appuyez le buste sur un coussin moelleux."
+            },
+            {
+                id: 3,
+                name: "L'Andromaque (Cowgirl)",
+                subtitle: "Le pouvoir sensuel et la maîtrise du rythme",
+                category: "Intense",
+                difficulty: "Facile",
+                intimacy: 4,
+                intensity: 4,
+                svgKey: "andromaque",
+                keywords: ["contrôle", "rythme", "clitoris", "regard", "liberté"],
+                description: "Dans cette posture valorisante, le partenaire au-dessus dirige le rythme, l'angle et la profondeur selon ses propres désirs, tout en offrant une vue captivante.",
+                steps: [
+                    "Un partenaire s'allonge sur le dos, jambes détendues ou légèrement repliées.",
+                    "L'autre partenaire s'installe à califourchon au-dessus, en appui sur les genoux ou les pieds.",
+                    "Posez les mains sur le torse du partenaire allongé pour trouver votre équilibre et initiez un mouvement de balancier."
+                ],
+                benefits: [
+                    "Maîtrise totale de l'amplitude, de la vitesse et de l'angle",
+                    "Stimulation extérieure facilitée par le mouvement de bassin",
+                    "Mains disponibles pour explorer le torse ou se caresser"
+                ],
+                tips: "Privilégiez un mouvement circulaire ou d'avant en arrière plutôt que vertical : le frottement sera beaucoup plus riche et moins fatigant pour les cuisses."
+            },
+            {
+                id: 4,
+                name: "La Cuillère",
+                subtitle: "La douceur enveloppante du matin",
+                category: "Détente",
+                difficulty: "Facile",
+                intimacy: 5,
+                intensity: 2,
+                svgKey: "cuillere",
+                keywords: ["matin", "douceur", "tendresse", "confort", "câlin", "lenteur"],
+                description: "Idéale pour les réveils paresseux ou les moments de grande tendresse, la Cuillère enveloppe les corps dans un cocon de chaleur et de proximité.",
+                steps: [
+                    "Les deux partenaires s'allongent sur le côté, orientés dans la même direction.",
+                    "Le partenaire situé derrière épouse la courbe du dos de l'autre et passe un bras autour de sa taille.",
+                    "Relevez légèrement la jambe supérieure du partenaire de devant pour faciliter l'union en douceur."
+                ],
+                benefits: [
+                    "Zéro fatigue physique : aucun poids à supporter",
+                    "Contact corporel intégral de la tête aux pieds",
+                    "Proximité idéale pour les caresses du cou, des oreilles et du buste"
+                ],
+                tips: "Cette posture est parfaite pour prendre son temps. Utilisez la main libre pour des caresses lentes et synchronisez vos souffles."
+            },
+            {
+                id: 5,
+                name: "Le Lotus",
+                subtitle: "L'union sacrée cœur contre cœur",
+                category: "Romantique",
+                difficulty: "Intermédiaire",
+                intimacy: 5,
+                intensity: 3,
+                svgKey: "lotus",
+                keywords: ["tantra", "fusion", "regard", "baisers", "souffle", "spirituel"],
+                description: "Inspirée des traditions tantriques, la posture du Lotus crée un cercle d'énergie fermé où les deux partenaires ne font littéralement plus qu'un.",
+                steps: [
+                    "Un partenaire s'assoit en tailleur sur le lit, le dos bien droit ou soutenu par des coussins.",
+                    "L'autre partenaire vient s'asseoir face à lui sur ses genoux, en enroulant ses jambes autour de sa taille.",
+                    "Enlacez vos bras autour des épaules et du dos l'un de l'autre et bercez-vous doucement."
+                ],
+                benefits: [
+                    "Fusion émotionnelle et physique incomparable",
+                    "Proximité parfaite pour les baisers continus et le regard dans les yeux",
+                    "Mouvements lents et ondulatoires très sensuels"
+                ],
+                tips: "Le partenaire assis en dessous peut s'adosser à la tête de lit avec de gros oreillers pour maintenir la posture longtemps sans tension lombaire."
+            },
+            {
+                id: 6,
+                name: "Le Pont",
+                subtitle: "L'arche esthétique et audacieuse",
+                category: "Acrobatique",
+                difficulty: "Avancé",
+                intimacy: 3,
+                intensity: 5,
+                svgKey: "pont",
+                keywords: ["souplesse", "cambrure", "sportif", "esthétique", "intense"],
+                description: "Spectaculaire et stimulante, cette position met en valeur la courbe du corps et offre un angle d'approche inédit et profond.",
+                steps: [
+                    "Le partenaire receveur s'allonge sur le dos, pieds à plat près des fessiers, et soulève son bassin vers le haut.",
+                    "Les épaules restent bien ancrées au matelas tandis que les mains soutiennent le bas du dos pour plus de stabilité.",
+                    "Le second partenaire s'agenouille entre les jambes et saisit délicatement la taille pour accompagner le mouvement."
+                ],
+                benefits: [
+                    "Angle de stimulation unique sollicitant des zones peu atteintes autrement",
+                    "Esthétique visuelle particulièrement sensuelle",
+                    "Renforce la complicité et la coordination du couple"
+                ],
+                tips: "Ne forcez jamais sur la nuque : gardez les épaules bien à plat sur le lit (demi-pont) et glissez un coussin ferme sous le sacrum si besoin."
+            },
+            {
+                id: 7,
+                name: "Le 69",
+                subtitle: "La réciprocité absolue des sens",
+                category: "Orale",
+                difficulty: "Intermédiaire",
+                intimacy: 4,
+                intensity: 5,
+                svgKey: "soixanteneuf",
+                keywords: ["oral", "réciprocité", "simultané", "plaisir partagé", "caresses"],
+                description: "Symbole universel du plaisir mutuel, le 69 permet d'offrir et de recevoir simultanément des caresses buccales dans une harmonie enivrante.",
+                steps: [
+                    "Allongez-vous tête-bêche sur le côté (variante la plus confortable) ou l'un au-dessus de l'autre.",
+                    "Assurez-vous que chacun dispose d'un appui confortable pour la tête et la nuque.",
+                    "Alternez caresses douces, baisers et attention délicate pour maintenir l'équilibre entre donner et recevoir."
+                ],
+                benefits: [
+                    "Plaisir simultané renforçant l'excitation mutuelle",
+                    "Exploration complète du corps de l'autre",
+                    "Idéal en préliminaires prolongés ou comme point d'orgue"
+                ],
+                tips: "La version allongée sur le côté évite toute fatigue cervicale et permet aux deux partenaires de se détendre pleinement."
+            },
+            {
+                id: 8,
+                name: "La Brouette",
+                subtitle: "L'aventure ludique et tonique",
+                category: "Acrobatique",
+                difficulty: "Avancé",
+                intimacy: 2,
+                intensity: 5,
+                svgKey: "brouette",
+                keywords: ["ludique", "dynamique", "force", "aventure", "adrénaline"],
+                description: "Audacieuse et complice, la Brouette s'adresse aux couples joueurs en quête de sensations fortes et d'une montée d'adrénaline.",
+                steps: [
+                    "Le partenaire receveur pose les mains fermement au sol ou sur le bord du lit, bras tendus.",
+                    "Le second partenaire, debout derrière, soulève délicatement ses jambes pour les placer autour de sa taille.",
+                    "Gardez un rythme maîtrisé et communiquez en permanence pour préserver l'équilibre."
+                ],
+                benefits: [
+                    "Sensations intenses et inédites",
+                    "Stimule l'esprit joueur et la confiance mutuelle",
+                    "Angle d'entrée très direct"
+                ],
+                tips: "Pratiquez-la près du lit afin que le partenaire en appui puisse poser ses mains ou ses coudes sur le matelas pour beaucoup plus de stabilité."
+            },
+            {
+                id: 9,
+                name: "L'Étoile de mer",
+                subtitle: "Le lâcher-prise total en toute sérénité",
+                category: "Détente",
+                difficulty: "Facile",
+                intimacy: 4,
+                intensity: 3,
+                svgKey: "etoile",
+                keywords: ["abandon", "relaxation", "douceur", "ouvert", "caresses"],
+                description: "Placée sous le signe de l'abandon et de la confiance, cette posture invite un partenaire à se détendre intégralement pendant que l'autre orchestre le plaisir.",
+                steps: [
+                    "Le partenaire receveur s'allonge sur le dos, bras et jambes ouverts en étoile dans une détente complète.",
+                    "Le second partenaire se place à genoux entre ses jambes, inclinant légèrement le buste.",
+                    "Prenez le temps de parcourir tout le corps de caresses avant d'initier un rythme doux et régulier."
+                ],
+                benefits: [
+                    "Détente musculaire absolue pour le partenaire allongé",
+                    "Accès libre à l'ensemble du corps pour les massages et baisers",
+                    "Très accessible et sans contrainte articulaire"
+                ],
+                tips: "Accompagnez cette posture d'une huile de massage tiède pour transformer l'instant en véritable rituel sensoriel."
+            },
+            {
+                id: 10,
+                name: "Le Coquillage",
+                subtitle: "L'intimité profonde et enveloppée",
+                category: "Intense",
+                difficulty: "Avancé",
+                intimacy: 4,
+                intensity: 5,
+                svgKey: "coquillage",
+                keywords: ["souplesse", "profondeur", "intense", "point g", "clos"],
+                description: "Posture de haute intensité où le corps se replie délicatement sur lui-même, créant un contact extrêmement étroit et des sensations amplifiées.",
+                steps: [
+                    "Le partenaire receveur s'allonge sur le dos et ramène progressivement ses jambes tendues ou fléchies vers ses épaules.",
+                    "Le second partenaire s'agenouille face à lui, soutenant délicatement l'arrière des cuisses ou les mollets.",
+                    "Avancez avec beaucoup de douceur et d'écoute pour respecter la souplesse de chacun."
+                ],
+                benefits: [
+                    "Stimulation d'une grande précision et d'une rare intensité",
+                    "Contact visuel conservé malgré l'intensité de la posture",
+                    "Sensation d'enveloppement unique"
+                ],
+                tips: "Ne cherchez jamais la performance acrobatique : repliez les genoux plutôt que de garder les jambes tendues pour un confort immédiat."
+            },
+            {
+                id: 11,
+                name: "Le Cheval à bascule",
+                subtitle: "Le balancement harmonieux et cadencé",
+                category: "Romantique",
+                difficulty: "Intermédiaire",
+                intimacy: 5,
+                intensity: 4,
+                svgKey: "cheval",
+                keywords: ["balancement", "harmonie", "regard", "rhythme", "complicité"],
+                description: "Véritable danse assise, le Cheval à bascule repose sur un mouvement de va-et-vient synchronisé où les deux partenaires participent à parts égales.",
+                steps: [
+                    "Les deux partenaires s'assoient face à face, jambes entrelacées autour des hanches de l'autre.",
+                    "Posez vos mains derrière vous sur le lit ou sur les épaules de votre partenaire pour stabiliser l'équilibre.",
+                    "Initiez un mouvement de balancier coordonné : lorsque l'un se penche en arrière, l'autre accompagne vers l'avant."
+                ],
+                benefits: [
+                    "Frottement continu très gratifiant",
+                    "Équilibre parfait entre tendresse visuelle et intensité physique",
+                    "Participation active et harmonieuse des deux amoureux"
+                ],
+                tips: "Commencez lentement pour trouver votre rythme commun : une fois le balancement lancé, l'inertie rend le mouvement fluide et sans effort."
+            },
+            {
+                id: 12,
+                name: "La Chaise",
+                subtitle: "L'étreinte verticale pleine de proximité",
+                category: "Romantique",
+                difficulty: "Intermédiaire",
+                intimacy: 5,
+                intensity: 4,
+                svgKey: "chaise",
+                keywords: ["fauteuil", "assise", "étreinte", "spontané", "regard"],
+                description: "Parfaite pour sortir de la chambre à coucher, la Chaise transforme un simple fauteuil en écrin d'intimité rapprochée.",
+                steps: [
+                    "Un partenaire s'assoit confortablement sur une chaise solide ou un fauteuil sans accoudoirs gênants.",
+                    "L'autre partenaire vient s'asseoir sur lui, face à lui, les pieds posés au sol ou sur les barreaux de la chaise.",
+                    "Enlacez-vous étroitement et utilisez l'appui des pieds au sol pour moduler le mouvement."
+                ],
+                benefits: [
+                    "Spontanéité et changement de décor immédiat",
+                    "Proximité des visages idéale pour les baisers passionnés",
+                    "Excellent contrôle du rythme grâce aux appuis au sol"
+                ],
+                tips: "Choisissez une assise stable et pas trop haute afin que le partenaire au-dessus puisse garder les pieds bien ancrés au sol."
+            },
+            {
+                id: 13,
+                name: "Le Trapèze",
+                subtitle: "La rencontre au bord du lit",
+                category: "Intense",
+                difficulty: "Intermédiaire",
+                intimacy: 4,
+                intensity: 5,
+                svgKey: "trapeze",
+                keywords: ["bord du lit", "debout", "appui", "dynamique", "angle"],
+                description: "Alliant le confort du lit et la liberté de la station debout, le Trapèze offre une liberté de mouvement remarquable.",
+                steps: [
+                    "Le partenaire receveur s'allonge sur le dos au bord du lit, les hanches juste à l'extrémité du matelas.",
+                    "Le second partenaire reste debout face au lit et place les jambes de l'autre sur ses épaules ou autour de sa taille.",
+                    "Le partenaire debout dirige le rythme avec aisance tout en gardant les mains libres."
+                ],
+                benefits: [
+                    "Aucune fatigue pour le partenaire allongé",
+                    "Grande amplitude de mouvement pour le partenaire debout",
+                    "Possibilité de varier facilement l'angle en pliant plus ou moins les genoux"
+                ],
+                tips: "La hauteur du lit est déterminante : si le lit est un peu bas, placez un coussin ferme sous le bassin du partenaire allongé."
+            },
+            {
+                id: 14,
+                name: "Le Papillon",
+                subtitle: "La légèreté aérienne et sensuelle",
+                category: "Acrobatique",
+                difficulty: "Intermédiaire",
+                intimacy: 4,
+                intensity: 5,
+                svgKey: "papillon",
+                keywords: ["bord du lit", "jambes levées", "stimulation", "élégance"],
+                description: "Variante raffinée au bord du lit, le Papillon déploie les jambes comme des ailes, offrant un accès direct et une stimulation ciblée.",
+                steps: [
+                    "Un partenaire s'allonge sur le dos au bord du lit, bassin surélevé par un coussin.",
+                    "Il relève ses jambes en V ouvert vers le haut ou les laisse reposer sur le buste du partenaire debout.",
+                    "Le partenaire debout soutient délicatement les hanches et accompagne le mouvement en douceur."
+                ],
+                benefits: [
+                    "Stimulation particulièrement intense et ciblée",
+                    "Permet facilement d'ajouter des caresses manuelles",
+                    "Posture très esthétique et ouverte"
+                ],
+                tips: "Gardez les épaules et la tête bien soutenues par un oreiller confortable pour éviter toute tension dans le haut du dos."
+            },
+            {
+                id: 15,
+                name: "L'Amazonie",
+                subtitle: "L'inversion audacieuse des rôles",
+                category: "Acrobatique",
+                difficulty: "Avancé",
+                intimacy: 4,
+                intensity: 5,
+                svgKey: "amazonie",
+                keywords: ["inversion", "dynamique", "puissance", "original", "complice"],
+                description: "Originale et surprenante, l'Amazonie inverse les repères habituels : le partenaire allongé replie les jambes tandis que l'autre surplombe en position accroupie.",
+                steps: [
+                    "Le partenaire du dessous s'allonge sur le dos et ramène ses genoux vers sa poitrine.",
+                    "Le partenaire du dessus s'installe en position accroupie au-dessus de son bassin, pieds bien à plat sur le matelas.",
+                    "Utilisez les mains sur les genoux ou les épaules pour maintenir un équilibre fluide."
+                ],
+                benefits: [
+                    "Sensations totalement nouvelles grâce à l'inversion des appuis",
+                    "Contrôle très précis de la profondeur par le partenaire au-dessus",
+                    "Renforce l'esprit d'exploration du couple"
+                ],
+                tips: "Assurez-vous d'avoir un matelas assez ferme pour offrir un bon appui aux pieds du partenaire accroupi."
+            },
+            {
+                id: 16,
+                name: "L'Enclume",
+                subtitle: "L'intensité profonde et maîtrisée",
+                category: "Intense",
+                difficulty: "Avancé",
+                intimacy: 4,
+                intensity: 5,
+                svgKey: "enclume",
+                keywords: ["profondeur", "jambes sur épaules", "intense", "passion"],
+                description: "Variante approfondie du Missionnaire, l'Enclume maximise la proximité des bassins tout en conservant le face-à-face.",
+                steps: [
+                    "Le partenaire receveur s'allonge sur le dos et lève ses jambes pour les poser sur les épaules de l'autre.",
+                    "Le second partenaire s'agenouille ou s'incline vers l'avant, prenant appui sur ses mains de part et d'autre des épaules.",
+                    "Commencez par des mouvements lents et peu amples afin de vous ajuster parfaitement."
+                ],
+                benefits: [
+                    "Profondeur maximale tout en préservant le contact visuel",
+                    "Sensation de proximité intense",
+                    "Idéal pour varier le rythme au cours d'une même étreinte"
+                ],
+                tips: "La communication est essentielle : avancez progressivement et utilisez un coussin sous le bas du dos pour préserver les lombaires."
+            },
+            {
+                id: 17,
+                name: "La Cascade Douce",
+                subtitle: "L'abandon délassant sur le ventre",
+                category: "Détente",
+                difficulty: "Facile",
+                intimacy: 4,
+                intensity: 3,
+                svgKey: "cascade",
+                keywords: ["ventre", "contact", "douceur", "chaleur", "relaxant"],
+                description: "Allongé à plat ventre, le corps entier bénéficie d'un contact chaleureux et rassurant, favorisant des sensations enveloppantes.",
+                steps: [
+                    "Un partenaire s'allonge confortablement sur le ventre, un coussin plat sous le bassin pour dégager légèrement les hanches.",
+                    "L'autre partenaire s'allonge par-dessus en répartissant son poids sur ses avant-bras.",
+                    "Les jambes du partenaire du dessous peuvent rester serrées pour une sensation plus étroite."
+                ],
+                benefits: [
+                    "Sensation de chaleur et de contact sur toute la surface du corps",
+                    "Très confortable et peu exigeante physiquement",
+                    "Idéale pour les baisers dans la nuque et le haut du dos"
+                ],
+                tips: "Glissez un oreiller sous le ventre ou le bassin pour rendre l'angle encore plus naturel et agréable."
+            },
+            {
+                id: 18,
+                name: "Le Trône de Velours",
+                subtitle: "L'offrande royale et attentionnée",
+                category: "Orale",
+                difficulty: "Facile",
+                intimacy: 4,
+                intensity: 4,
+                svgKey: "trone",
+                keywords: ["oral", "fauteuil", "attention", "don", "confort", "royal"],
+                description: "Dédiée au plaisir exclusif du partenaire assis, cette posture met l'accent sur la générosité, la lenteur et l'attention portée à chaque réaction.",
+                steps: [
+                    "Le partenaire receveur s'installe confortablement au bord du lit ou dans un fauteuil accueillant, dos bien calé.",
+                    "L'autre partenaire s'agenouille devant lui sur un coussin moelleux pour préserver ses genoux.",
+                    "Prenez le temps d'explorer par des baisers sur l'intérieur des cuisses avant de vous concentrer sur le plaisir."
+                ],
+                benefits: [
+                    "Confort optimal permettant de prolonger le moment sans fatigue",
+                    "Contact visuel privilégié pour observer le plaisir de l'autre",
+                    "Mains libres pour caresser les hanches, le ventre ou les cheveux"
+                ],
+                tips: "Placez un coussin épais sous les genoux du partenaire agenouillé pour qu'il puisse se consacrer entièrement au moment présent."
+            }
+        ];
+
+        // =====================================================================
+        // ÉTAT DE L'APPLICATION & PERSISTANCE LOCALSTORAGE
+        // =====================================================================
+        let state = {
+            currentView: 'catalog', // 'catalog' | 'lists'
+            listSubTab: 'favorites', // 'favorites' | 'wishlist'
+            searchQuery: '',
+            categoryFilter: 'Toutes',
+            difficultyFilter: 'Toutes',
+            favorites: JSON.parse(localStorage.getItem('kamaguide_favorites') || '[]'),
+            wishlist: JSON.parse(localStorage.getItem('kamaguide_wishlist') || '[]'),
+            lastRouletteId: null
+        };
+
+        function saveListsToStorage() {
+            localStorage.setItem('kamaguide_favorites', JSON.stringify(state.favorites));
+            localStorage.setItem('kamaguide_wishlist', JSON.stringify(state.wishlist));
+            updateBadges();
+        }
+
+        function updateBadges() {
+            const favCount = state.favorites.length;
+            const wishCount = state.wishlist.length;
+            const totalUnique = new Set([...state.favorites, ...state.wishlist]).size;
+
+            document.getElementById('total-saved-badge').textContent = totalUnique;
+            document.getElementById('stat-favorites').textContent = favCount;
+            document.getElementById('stat-wishlist').textContent = wishCount;
+            document.getElementById('tab-fav-count').textContent = favCount;
+            document.getElementById('tab-wish-count').textContent = wishCount;
+        }
+
+        // =====================================================================
+        // GESTION DES FAVORIS & LISTE "À TESTER"
+        // =====================================================================
+        function toggleFavorite(id, event) {
+            if (event) event.stopPropagation();
+            const idx = state.favorites.indexOf(id);
+            if (idx === -1) {
+                state.favorites.push(id);
+                showToast("Ajouté à vos favoris", "heart");
+            } else {
+                state.favorites.splice(idx, 1);
+                showToast("Retiré de vos favoris", "heart-off");
+            }
+            saveListsToStorage();
+            renderPositions();
+        }
+
+        function toggleWishlist(id, event) {
+            if (event) event.stopPropagation();
+            const idx = state.wishlist.indexOf(id);
+            if (idx === -1) {
+                state.wishlist.push(id);
+                showToast("Ajouté à la liste « À essayer en couple »", "bookmark-check");
+            } else {
+                state.wishlist.splice(idx, 1);
+                showToast("Retiré de la liste « À essayer »", "bookmark-minus");
+            }
+            saveListsToStorage();
+            renderPositions();
+        }
+
+        // =====================================================================
+        // FILTRAGE & NAVIGATION
+        // =====================================================================
+        function switchView(view, subTab = null) {
+            state.currentView = view;
+            if (subTab) state.listSubTab = subTab;
+
+            const navCatalog = document.getElementById('nav-catalog');
+            const navLists = document.getElementById('nav-lists');
+            const filtersSection = document.getElementById('filters-section');
+            const listsHeader = document.getElementById('lists-header');
+
+            if (view === 'catalog') {
+                navCatalog.className = "px-3.5 py-2 rounded-full text-xs sm:text-sm font-medium transition-all bg-bordeaux-600/80 text-rosegold-300 border border-rosegold-400/30 flex items-center gap-1.5";
+                navLists.className = "px-3.5 py-2 rounded-full text-xs sm:text-sm font-medium transition-all bg-velvet-800/80 hover:bg-velvet-700 text-rosegold-300/90 border border-rosegold-400/20 flex items-center gap-1.5 relative";
+                filtersSection.classList.remove('hidden');
+                listsHeader.classList.add('hidden');
+            } else {
+                navLists.className = "px-3.5 py-2 rounded-full text-xs sm:text-sm font-medium transition-all bg-bordeaux-600/80 text-rosegold-300 border border-rosegold-400/30 flex items-center gap-1.5 relative";
+                navCatalog.className = "px-3.5 py-2 rounded-full text-xs sm:text-sm font-medium transition-all bg-velvet-800/80 hover:bg-velvet-700 text-rosegold-300/90 border border-rosegold-400/20 flex items-center gap-1.5";
+                filtersSection.classList.add('hidden');
+                listsHeader.classList.remove('hidden');
+                updateListSubTabsUI();
+            }
+            renderPositions();
+        }
+
+        function setListSubTab(tab) {
+            state.listSubTab = tab;
+            updateListSubTabsUI();
+            renderPositions();
+        }
+
+        function updateListSubTabsUI() {
+            const tabFav = document.getElementById('tab-favorites');
+            const tabWish = document.getElementById('tab-wishlist');
+            if (state.listSubTab === 'favorites') {
+                tabFav.className = "flex-1 sm:flex-initial px-4 py-2 rounded-lg text-xs sm:text-sm font-medium bg-bordeaux-600 text-white transition flex items-center justify-center gap-2";
+                tabWish.className = "flex-1 sm:flex-initial px-4 py-2 rounded-lg text-xs sm:text-sm font-medium text-rosegold-300/80 hover:text-white transition flex items-center justify-center gap-2";
+            } else {
+                tabWish.className = "flex-1 sm:flex-initial px-4 py-2 rounded-lg text-xs sm:text-sm font-medium bg-bordeaux-600 text-white transition flex items-center justify-center gap-2";
+                tabFav.className = "flex-1 sm:flex-initial px-4 py-2 rounded-lg text-xs sm:text-sm font-medium text-rosegold-300/80 hover:text-white transition flex items-center justify-center gap-2";
+            }
+        }
+
+        function setCategoryFilter(cat) {
+            state.categoryFilter = cat;
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                if (btn.dataset.cat === cat) {
+                    btn.className = "cat-btn active px-4 py-2 rounded-full text-xs font-medium bg-bordeaux-600 text-white border border-rosegold-400/40 transition shrink-0 flex items-center gap-1.5";
+                } else {
+                    btn.className = "cat-btn px-4 py-2 rounded-full text-xs font-medium bg-velvet-900/80 text-rosegold-300/80 border border-rosegold-400/15 hover:border-rosegold-400/40 transition shrink-0 flex items-center gap-1.5";
+                }
+            });
+            renderPositions();
+        }
+
+        function setDifficultyFilter(diff) {
+            state.difficultyFilter = diff;
+            document.querySelectorAll('.diff-btn').forEach(btn => {
+                if (btn.dataset.diff === diff) {
+                    btn.className = "diff-btn active px-3.5 py-2 rounded-xl text-xs font-medium bg-rosegold-400 text-velvet-950 transition shrink-0";
+                } else {
+                    btn.className = "diff-btn px-3.5 py-2 rounded-xl text-xs font-medium bg-velvet-800/80 text-rosegold-300/80 border border-rosegold-400/15 hover:border-rosegold-400/40 transition shrink-0";
+                }
+            });
+            renderPositions();
+        }
+
+        function clearSearch() {
+            const input = document.getElementById('search-input');
+            input.value = '';
+            state.searchQuery = '';
+            document.getElementById('clear-search').classList.add('hidden');
+            renderPositions();
+        }
+
+        function resetAllFilters() {
+            state.searchQuery = '';
+            document.getElementById('search-input').value = '';
+            document.getElementById('clear-search').classList.add('hidden');
+            setCategoryFilter('Toutes');
+            setDifficultyFilter('Toutes');
+            switchView('catalog');
+        }
+
+        // =====================================================================
+        // RENDU DES CARTES DU CATALOGUE
+        // =====================================================================
+        function getDifficultyBadgeStyle(diff) {
+            switch (diff) {
+                case 'Facile':
+                    return 'bg-emerald-950/80 text-emerald-300 border-emerald-500/30';
+                case 'Intermédiaire':
+                    return 'bg-amber-950/80 text-amber-300 border-amber-500/30';
+                case 'Avancé':
+                    return 'bg-rose-950/90 text-rose-300 border-rose-500/40';
+                default:
+                    return 'bg-velvet-800 text-rosegold-300 border-rosegold-400/20';
+            }
+        }
+
+        function renderDots(score, max = 5, activeColor = "bg-rosegold-400") {
+            let dots = '';
+            for (let i = 1; i <= max; i++) {
+                dots += `<span class="w-1.5 h-1.5 rounded-full ${i <= score ? activeColor : 'bg-white/15'}"></span>`;
+            }
+            return dots;
+        }
+
+        function renderPositions() {
+            const grid = document.getElementById('positions-grid');
+            const emptyState = document.getElementById('empty-state');
+            const resultsCount = document.getElementById('results-count');
+            const resetLink = document.getElementById('reset-filters-link');
+
+            let filtered = POSITIONS_DATA;
+
+            if (state.currentView === 'lists') {
+                const targetIds = state.listSubTab === 'favorites' ? state.favorites : state.wishlist;
+                filtered = POSITIONS_DATA.filter(p => targetIds.includes(p.id));
+                resetLink.classList.add('hidden');
+            } else {
+                const q = state.searchQuery.trim().toLowerCase();
+                filtered = POSITIONS_DATA.filter(p => {
+                    const matchesCat = state.categoryFilter === 'Toutes' || p.category === state.categoryFilter;
+                    const matchesDiff = state.difficultyFilter === 'Toutes' || p.difficulty === state.difficultyFilter;
+                    const matchesQuery = !q ||
+                        p.name.toLowerCase().includes(q) ||
+                        p.subtitle.toLowerCase().includes(q) ||
+                        p.description.toLowerCase().includes(q) ||
+                        p.category.toLowerCase().includes(q) ||
+                        p.keywords.some(k => k.toLowerCase().includes(q));
+                    return matchesCat && matchesDiff && matchesQuery;
+                });
+
+                const hasActiveFilters = state.categoryFilter !== 'Toutes' || state.difficultyFilter !== 'Toutes' || q !== '';
+                if (hasActiveFilters) {
+                    resetLink.classList.remove('hidden');
+                } else {
+                    resetLink.classList.add('hidden');
+                }
+            }
+
+            resultsCount.innerHTML = `Affichage de <span class="text-white font-semibold">${filtered.length}</span> position${filtered.length > 1 ? 's' : ''}`;
+
+            if (filtered.length === 0) {
+                grid.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                if (state.currentView === 'lists') {
+                    document.getElementById('empty-title').textContent = state.listSubTab === 'favorites'
+                        ? "Aucun favori enregistré"
+                        : "Votre liste « À essayer » est vide";
+                    document.getElementById('empty-desc').textContent = "Parcourez le catalogue et cliquez sur le cœur ou le signet d'une position pour la sauvegarder ici.";
+                } else {
+                    document.getElementById('empty-title').textContent = "Aucune position trouvée";
+                    document.getElementById('empty-desc').textContent = "Essayez de modifier vos critères de recherche ou d'explorer toutes les ambiances disponibles.";
+                }
+                lucide.createIcons();
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+
+            grid.innerHTML = filtered.map((pos, index) => {
+                const isFav = state.favorites.includes(pos.id);
+                const isWish = state.wishlist.includes(pos.id);
+
+                return `
+                    <article onclick="openDetailModal(${pos.id})" style="animation-delay: ${Math.min(index * 40, 300)}ms" class="card-animate glass-card rounded-2xl p-4 sm:p-5 flex flex-col justify-between cursor-pointer group relative overflow-hidden">
+                        <!-- Barre supérieure : Catégorie & Actions rapides -->
+                        <div class="flex items-center justify-between gap-2 mb-3 z-10">
+                            <span class="text-[11px] font-medium px-2.5 py-1 rounded-full bg-velvet-950/90 text-rosegold-300 border border-rosegold-400/20">
+                                ${pos.category}
+                            </span>
+                            <div class="flex items-center gap-1.5">
+                                <button 
+                                    onclick="toggleWishlist(${pos.id}, event)" 
+                                    title="${isWish ? 'Retirer de À essayer' : 'Ajouter à À essayer en couple'}"
+                                    class="w-8 h-8 rounded-full flex items-center justify-center border transition ${isWish ? 'bg-amber-500/20 border-amber-400/50 text-amber-300' : 'bg-velvet-950/70 border-white/10 text-rosegold-300/60 hover:text-white hover:border-rosegold-400/40'}"
+                                >
+                                    <i data-lucide="bookmark" class="w-3.5 h-3.5 ${isWish ? 'fill-current' : ''}"></i>
+                                </button>
+                                <button 
+                                    onclick="toggleFavorite(${pos.id}, event)" 
+                                    title="${isFav ? 'Retirer des favoris' : 'Ajouter aux favoris'}"
+                                    class="w-8 h-8 rounded-full flex items-center justify-center border transition ${isFav ? 'bg-bordeaux-500/30 border-bordeaux-500 text-rose-300' : 'bg-velvet-950/70 border-white/10 text-rosegold-300/60 hover:text-white hover:border-rosegold-400/40'}"
+                                >
+                                    <i data-lucide="heart" class="w-3.5 h-3.5 ${isFav ? 'fill-current text-bordeaux-500' : ''}"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Zone Illustration SVG -->
+                        <div class="my-1 py-2 px-3 rounded-xl bg-velvet-950/60 border border-rosegold-400/10 group-hover:border-rosegold-400/25 transition-colors flex items-center justify-center">
+                            ${getPositionSVG(pos.svgKey, false)}
+                        </div>
+
+                        <!-- Titre & Sous-titre -->
+                        <div class="mt-3.5">
+                            <h3 class="font-serif text-xl sm:text-2xl font-bold text-white group-hover:text-rosegold-300 transition-colors leading-snug">
+                                ${pos.name}
+                            </h3>
+                            <p class="text-xs text-rosegold-300/70 line-clamp-1 mt-0.5">
+                                ${pos.subtitle}
+                            </p>
+                        </div>
+
+                        <!-- Pied de carte : Difficulté & Jauges Intimité/Intensité -->
+                        <div class="mt-4 pt-3 border-t border-white/10 flex items-center justify-between gap-2">
+                            <span class="text-[11px] font-medium px-2.5 py-0.5 rounded-md border ${getDifficultyBadgeStyle(pos.difficulty)}">
+                                ${pos.difficulty}
+                            </span>
+
+                            <div class="flex items-center gap-3 text-[11px] text-rosegold-300/75">
+                                <div class="flex items-center gap-1" title="Intimité : ${pos.intimacy}/5">
+                                    <span>Intimité</span>
+                                    <div class="flex gap-0.5">${renderDots(pos.intimacy, 5, 'bg-rosegold-400')}</div>
+                                </div>
+                                <div class="flex items-center gap-1" title="Intensité : ${pos.intensity}/5">
+                                    <span>Intensité</span>
+                                    <div class="flex gap-0.5">${renderDots(pos.intensity, 5, 'bg-bordeaux-500')}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+                `;
+            }).join('');
+
+            lucide.createIcons();
+        }
+
+        // =====================================================================
+        // MODALE DE FICHE DÉTAILLÉE
+        // =====================================================================
+        function openDetailModal(id) {
+            const pos = POSITIONS_DATA.find(p => p.id === id);
+            if (!pos) return;
+
+            const isFav = state.favorites.includes(pos.id);
+            const isWish = state.wishlist.includes(pos.id);
+            const modal = document.getElementById('detail-modal');
+            const content = document.getElementById('detail-modal-content');
+
+            content.innerHTML = `
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
+                    <!-- Colonne Gauche : Visuel & Métadonnées -->
+                    <div class="lg:col-span-5 space-y-4">
+                        <div class="rounded-2xl bg-velvet-950/90 border border-rosegold-400/20 p-6 flex flex-col items-center justify-center relative">
+                            <span class="self-start text-xs font-medium px-3 py-1 rounded-full bg-bordeaux-700/60 text-rosegold-300 border border-rosegold-400/25 mb-2">
+                                ${pos.category}
+                            </span>
+                            ${getPositionSVG(pos.svgKey, true)}
+                        </div>
+
+                        <!-- Jauges détaillées -->
+                        <div class="rounded-2xl bg-velvet-900/80 border border-rosegold-400/15 p-4 space-y-3">
+                            <div class="flex items-center justify-between text-xs">
+                                <span class="text-rosegold-300/80">Niveau requis</span>
+                                <span class="font-semibold px-2.5 py-0.5 rounded border ${getDifficultyBadgeStyle(pos.difficulty)}">${pos.difficulty}</span>
+                            </div>
+                            <div class="flex items-center justify-between text-xs">
+                                <span class="text-rosegold-300/80">Intimité & Tendresse</span>
+                                <div class="flex items-center gap-1.5">
+                                    <div class="flex gap-1">${renderDots(pos.intimacy, 5, 'bg-rosegold-400')}</div>
+                                    <span class="text-white font-semibold ml-1">${pos.intimacy}/5</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between text-xs">
+                                <span class="text-rosegold-300/80">Intensité & Stimulation</span>
+                                <div class="flex items-center gap-1.5">
+                                    <div class="flex gap-1">${renderDots(pos.intensity, 5, 'bg-bordeaux-500')}</div>
+                                    <span class="text-white font-semibold ml-1">${pos.intensity}/5</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Boutons Favoris / À tester -->
+                        <div class="grid grid-cols-2 gap-2.5">
+                            <button onclick="toggleFavorite(${pos.id}); openDetailModal(${pos.id});" class="py-2.5 px-3 rounded-xl text-xs font-medium border transition flex items-center justify-center gap-2 ${isFav ? 'bg-bordeaux-600 text-white border-rosegold-400/40' : 'bg-velvet-900 text-rosegold-300 border-rosegold-400/20 hover:border-rosegold-400/50'}">
+                                <i data-lucide="heart" class="w-4 h-4 ${isFav ? 'fill-current' : ''}"></i>
+                                <span>${isFav ? 'Dans vos favoris' : 'Ajouter aux favoris'}</span>
+                            </button>
+                            <button onclick="toggleWishlist(${pos.id}); openDetailModal(${pos.id});" class="py-2.5 px-3 rounded-xl text-xs font-medium border transition flex items-center justify-center gap-2 ${isWish ? 'bg-amber-600/30 text-amber-200 border-amber-400/50' : 'bg-velvet-900 text-rosegold-300 border-rosegold-400/20 hover:border-rosegold-400/50'}">
+                                <i data-lucide="bookmark" class="w-4 h-4 ${isWish ? 'fill-current' : ''}"></i>
+                                <span>${isWish ? 'Dans À essayer' : 'À essayer à deux'}</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Colonne Droite : Description, Étapes, Avantages & Conseils -->
+                    <div class="lg:col-span-7 space-y-5 pr-2">
+                        <div>
+                            <h2 class="font-serif text-3xl sm:text-4xl font-bold rosegold-gradient-text leading-tight">
+                                ${pos.name}
+                            </h2>
+                            <p class="text-sm text-rosegold-400 font-medium mt-1">${pos.subtitle}</p>
+                            <p class="text-sm text-rosegold-300/85 leading-relaxed mt-3">
+                                ${pos.description}
+                            </p>
+                        </div>
+
+                        <!-- Étapes de mise en place -->
+                        <div>
+                            <h3 class="font-serif text-xl font-semibold text-white flex items-center gap-2 mb-2.5">
+                                <i data-lucide="list-ordered" class="w-4 h-4 text-rosegold-400"></i>
+                                <span>Mise en place pas à pas</span>
+                            </h3>
+                            <ol class="space-y-2">
+                                ${pos.steps.map((step, i) => `
+                                    <li class="flex items-start gap-3 text-xs sm:text-sm text-rosegold-300/90 bg-velvet-900/50 p-3 rounded-xl border border-white/5">
+                                        <span class="w-5 h-5 rounded-full bg-bordeaux-600/80 text-rosegold-300 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">${i + 1}</span>
+                                        <span>${step}</span>
+                                    </li>
+                                `).join('')}
+                            </ol>
+                        </div>
+
+                        <!-- Avantages principaux -->
+                        <div>
+                            <h3 class="font-serif text-xl font-semibold text-white flex items-center gap-2 mb-2.5">
+                                <i data-lucide="sparkles" class="w-4 h-4 text-rosegold-400"></i>
+                                <span>Points forts & Sensations</span>
+                            </h3>
+                            <ul class="space-y-1.5">
+                                ${pos.benefits.map(b => `
+                                    <li class="flex items-center gap-2.5 text-xs sm:text-sm text-rosegold-300/90">
+                                        <i data-lucide="check" class="w-4 h-4 text-rosegold-400 shrink-0"></i>
+                                        <span>${b}</span>
+                                    </li>
+                                `).join('')}
+                            </ul>
+                        </div>
+
+                        <!-- Conseil pratique -->
+                        <div class="rounded-2xl bg-gradient-to-r from-bordeaux-700/40 to-velvet-800/80 border border-rosegold-400/30 p-4">
+                            <div class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-rosegold-300 mb-1">
+                                <i data-lucide="lightbulb" class="w-4 h-4 text-amber-300"></i>
+                                <span>Le Conseil KamaGuide</span>
+                            </div>
+                            <p class="text-xs sm:text-sm text-rosegold-300/90 leading-relaxed">
+                                ${pos.tips}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.body.style.overflow = 'hidden';
+            lucide.createIcons();
+        }
+
+        function closeDetailModal() {
+            const modal = document.getElementById('detail-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            document.body.style.overflow = '';
+        }
+
+        // =====================================================================
+        // MODALE ROULETTE / DÉ DE L'AMOUR
+        // =====================================================================
+        function openRouletteModal() {
+            const modal = document.getElementById('roulette-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.body.style.overflow = 'hidden';
+            lucide.createIcons();
+        }
+
+        function closeRouletteModal() {
+            const modal = document.getElementById('roulette-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            document.body.style.overflow = '';
+        }
+
+        function spinRoulette() {
+            const cat = document.getElementById('roulette-cat').value;
+            const diff = document.getElementById('roulette-diff').value;
+            const spinBtn = document.getElementById('spin-btn');
+            const detailBtn = document.getElementById('roulette-detail-btn');
+            const placeholder = document.getElementById('roulette-placeholder');
+            const resultBox = document.getElementById('roulette-result');
+
+            // Filtrer le pool disponible
+            let pool = POSITIONS_DATA.filter(p => {
+                const okCat = cat === 'Toutes' || p.category === cat;
+                let okDiff = true;
+                if (diff === 'Facile') okDiff = p.difficulty === 'Facile';
+                if (diff === 'Intermédiaire') okDiff = (p.difficulty === 'Facile' || p.difficulty === 'Intermédiaire');
+                if (diff === 'Avancé') okDiff = p.difficulty === 'Avancé';
+                return okCat && okDiff;
+            });
+
+            if (pool.length === 0) {
+                showToast("Aucune position ne correspond à cette combinaison", "alert-circle");
+                return;
+            }
+
+            // Éviter de retomber immédiatement sur la même position si le pool > 1
+            if (pool.length > 1 && state.lastRouletteId) {
+                pool = pool.filter(p => p.id !== state.lastRouletteId);
+            }
+
+            spinBtn.disabled = true;
+            spinBtn.classList.add('opacity-70');
+            detailBtn.classList.add('hidden');
+            placeholder.classList.add('hidden');
+            resultBox.classList.remove('hidden');
+
+            // Animation de défilement rapide
+            let ticks = 0;
+            const maxTicks = 14;
+            const interval = setInterval(() => {
+                const tempPos = pool[Math.floor(Math.random() * pool.length)];
+                resultBox.innerHTML = `
+                    <div class="opacity-65 scale-95 transition-all">
+                        <span class="text-[11px] uppercase tracking-widest text-rosegold-400">${tempPos.category}</span>
+                        <div class="my-2">${getPositionSVG(tempPos.svgKey, false)}</div>
+                        <h3 class="font-serif text-2xl font-bold text-white">${tempPos.name}</h3>
+                    </div>
+                `;
+                ticks++;
+
+                if (ticks >= maxTicks) {
+                    clearInterval(interval);
+                    const chosen = pool[Math.floor(Math.random() * pool.length)];
+                    state.lastRouletteId = chosen.id;
+
+                    resultBox.innerHTML = `
+                        <div class="animate-[fadeSlideUp_0.35s_ease] flex flex-col items-center">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="text-xs px-2.5 py-0.5 rounded-full bg-bordeaux-600/80 text-rosegold-300 border border-rosegold-400/30">${chosen.category}</span>
+                                <span class="text-xs px-2.5 py-0.5 rounded border ${getDifficultyBadgeStyle(chosen.difficulty)}">${chosen.difficulty}</span>
+                            </div>
+                            <div class="my-1">${getPositionSVG(chosen.svgKey, false)}</div>
+                            <h3 class="font-serif text-3xl font-bold rosegold-gradient-text">${chosen.name}</h3>
+                            <p class="text-xs sm:text-sm text-rosegold-300/80 mt-1 max-w-sm">${chosen.subtitle}</p>
+                        </div>
+                    `;
+
+                    spinBtn.disabled = false;
+                    spinBtn.classList.remove('opacity-70');
+                    spinBtn.innerHTML = `<i data-lucide="refresh-cw" class="w-4 h-4"></i><span>Relancer le dé</span>`;
+
+                    detailBtn.classList.remove('hidden');
+                    detailBtn.onclick = () => {
+                        closeRouletteModal();
+                        openDetailModal(chosen.id);
+                    };
+                    lucide.createIcons();
+                }
+            }, 85);
+        }
+
+        // =====================================================================
+        // UTILITAIRES (TOAST, CLAVIER, INITIALISATION)
+        // =====================================================================
+        let toastTimeout;
+        function showToast(message, iconName = "check-circle-2") {
+            const toast = document.getElementById('toast');
+            const msgEl = document.getElementById('toast-message');
+            const iconEl = document.getElementById('toast-icon');
+
+            msgEl.textContent = message;
+            iconEl.setAttribute('data-lucide', iconName);
+            lucide.createIcons();
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 2600);
+        }
+
+        // Écouteurs d'événements
+        document.getElementById('search-input').addEventListener('input', (e) => {
+            state.searchQuery = e.target.value;
+            const clearBtn = document.getElementById('clear-search');
+            if (state.searchQuery.length > 0) {
+                clearBtn.classList.remove('hidden');
+            } else {
+                clearBtn.classList.add('hidden');
+            }
+            renderPositions();
+        });
+
+        // Fermeture des modales au clic sur l'arrière-plan ou touche Échap
+        document.getElementById('detail-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'detail-modal') closeDetailModal();
+        });
+        document.getElementById('roulette-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'roulette-modal') closeRouletteModal();
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeDetailModal();
+                closeRouletteModal();
+            }
+        });
+
+        // Initialisation au chargement
+        window.addEventListener('DOMContentLoaded', () => {
+            updateBadges();
+            renderPositions();
+            lucide.createIcons();
+        });
+    </script>
+</body>
+</html>
